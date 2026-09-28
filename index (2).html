@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A crop-aware soil monitoring dashboard with live readings and reference growth-stage data.">
+  <title>Soil Monitoring Dashboard</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <main>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Soil Monitoring System home">
+        <span class="brand-mark" aria-hidden="true">S</span>
+        <span><strong>Soil Monitoring System</strong><small>Crop monitoring dashboard</small></span>
+      </a>
+      <div class="header-status" aria-label="Dashboard status"><span class="status-dot" aria-hidden="true"></span><span class="connection-label" data-firebase-status>Waiting for setup</span></div>
+    </header>
+
+    <section class="hero" id="top">
+      <div class="hero-copy">
+        <span class="eyebrow">Field 01 · Demonstration dashboard</span>
+        <h1>See what's happening in your field, in context.</h1>
+        <p>The dashboard displays live soil sensor readings alongside reference growth-stage information for the crop you select.</p>
+      </div>
+      <aside class="hero-note" aria-label="System behavior">
+        <span class="note-icon" aria-hidden="true">i</span>
+        <p><strong>Monitoring dashboard</strong>This dashboard displays sensor readings and reference crop data for comparison. It does not generate fertilizer, irrigation or treatment recommendations.</p>
+      </aside>
+    </section>
+
+    <section class="setup-card" aria-labelledby="field-setup-title">
+      <div class="section-heading compact">
+        <div><span class="section-number">01</span><div><p class="section-kicker">Field setup</p><h2 id="field-setup-title">Tell us what is growing</h2></div></div>
+        <span class="sample-tag">Sample selection</span>
+      </div>
+      <form class="field-form">
+        <label class="form-field">
+          <span>Crop in this field</span>
+          <select id="cropSelect" name="crop" aria-describedby="crop-help">
+            <option value="maize" selected>Maize</option>
+            <option value="beans">Common beans</option>
+            <option value="soybeans">Soybeans</option>
+            <option value="sugarcane">Sugarcane</option>
+            <option value="sorghum">Sorghum</option>
+            <option value="sweet_potato">Sweet potato</option>
+            <option value="potato">Potato</option>
+            <option value="strawberry">Strawberry</option>
+            <option value="grapes">Grapes</option>
+          </select>
+          <small id="crop-help">Select the crop monitored by the sensor.</small>
+        </label>
+        <label class="form-field">
+          <span>Planting date</span>
+          <input id="plantingDate" type="date" name="planting-date">
+          <small>Used to calculate Days After Planting (DAP).</small>
+        </label>
+        <div class="stage-summary" aria-label="Estimated crop stage" aria-live="polite">
+          <span class="stage-label">Days after planting</span>
+          <div class="dap-value" id="dapValue">--</div>
+          <span data-stage-name>Select a crop and planting date</span>
+          <small data-stage-summary>Waiting for field setup</small>
+        </div>
+      </form>
+    </section>
+
+    <section class="dashboard-section" aria-labelledby="sensor-title">
+      <div class="section-heading">
+        <div><span class="section-number">02</span><div><p class="section-kicker">Live input</p><h2 id="sensor-title">What the soil sensor is reading</h2></div></div>
+        <div class="sensor-controls">
+          <div class="reading-time"><span>Last reading</span><strong data-last-updated>No reading yet</strong></div>
+          <div class="reading-time"><span>Device</span><strong data-device-id>--</strong></div>
+          <div class="simulation-controls" aria-label="Sensor simulation controls">
+            <button class="simulate-button" id="simulateButton" type="button">Simulate new reading</button>
+            <label class="auto-toggle">
+              <input type="checkbox" id="autoSimulation">
+              <span>Auto-simulate every 5s</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <p class="system-status" data-system-status>Waiting for sensor data</p>
+      <div class="reading-grid">
+        <article class="reading-card featured" id="moisture">
+          <div class="reading-topline"><span>Soil moisture</span><span class="reading-status">Waiting</span></div>
+          <div class="reading-value">--</div>
+          <div class="meter" aria-label="Soil moisture meter"><span class="meter-fill moisture"></span></div>
+        </article>
+        <article class="reading-card" id="temperature">
+          <div class="reading-topline"><span>Soil temperature</span><span class="reading-status">Waiting</span></div>
+          <div class="reading-value">--</div>
+        </article>
+        <article class="reading-card" id="ph">
+          <div class="reading-topline"><span>Soil pH</span><span class="reading-status">Waiting</span></div>
+          <div class="reading-value">--</div>
+        </article>
+        <article class="reading-card" id="ec">
+          <div class="reading-topline"><span>Electrical conductivity</span><span class="reading-status">Waiting</span></div>
+          <div class="reading-value">--</div>
+        </article>
+        <article class="reading-card nutrient-card" id="nitrogen">
+          <div class="reading-topline"><span>Nitrogen (N)</span><span class="reading-status">Waiting</span></div>
+          <div class="reading-value">--</div>
+        </article>
+        <article class="reading-card nutrient-card" id="phosphorus">
+          <div class="reading-topline"><span>Phosphorus (P)</span><span class="reading-status">Waiting</span></div>
+          <div class="reading-value">--</div>
+        </article>
+        <article class="reading-card nutrient-card" id="potassium">
+          <div class="reading-topline"><span>Potassium (K)</span><span class="reading-status">Waiting</span></div>
+          <div class="reading-value">--</div>
+        </article>
+      </div>
+    </section>
+
+    <section class="comparison-layout" aria-labelledby="ideal-title">
+      <div class="ideal-panel">
+        <div class="section-heading panel-heading"><div><span class="section-number">03</span><div><p class="section-kicker">Reference profile</p><h2 id="ideal-title" data-crop-name>Select a crop</h2></div></div></div>
+        <p data-crop-overview>Select a crop to view its reference growth information.</p>
+        <div class="stage-banner"><div><span>Current growth stage</span><strong data-stage-name>Stage not calculated</strong></div></div>
+        <dl class="target-list">
+          <div><dt>Soil moisture (stage reference)</dt><dd><strong data-stage-moisture>—</strong><span data-stage-summary>No reading</span></dd></div>
+          <div><dt>Temperature reference</dt><dd><strong data-crop-temperature>—</strong></dd></div>
+          <div><dt>Soil pH reference</dt><dd><strong data-crop-ph>—</strong></dd></div>
+          <div><dt>EC reference</dt><dd><strong data-crop-ec>—</strong></dd></div>
+          <div><dt>Estimated harvest</dt><dd><strong data-crop-harvest>—</strong></dd></div>
+        </dl>
+        <p class="profile-disclaimer">Reference values are educational only and are not calibrated to this field's soil, variety or local conditions.</p>
+      </div>
+
+      <aside class="action-panel" data-monitoring-status aria-labelledby="action-title" aria-live="polite">
+        <span class="action-label">04 · Monitoring status</span><div class="action-icon" aria-hidden="true">i</div>
+        <h2 id="action-title">Monitoring Status</h2>
+        <p class="action-summary">Waiting for soil sensor data.</p>
+      </aside>
+    </section>
+
+    <section class="crop-article" aria-labelledby="article-title">
+      <div class="article-intro">
+        <span class="article-label">Field observation notes</span>
+        <h2 id="article-title" data-crop-name>Select a crop to begin</h2>
+        <p data-crop-overview>This section will show general observations and a growth-stage breakdown once a crop is selected.</p>
+      </div>
+      <div class="article-body">
+        <div class="article-tip">
+          <strong>General observations</strong>
+          <ul data-crop-signs>
+            <li>Select a crop to view reference observations.</li>
+          </ul>
+        </div>
+        <div class="stage-breakdown">
+          <strong>Growth stage reference</strong>
+          <div data-crop-stages>
+            <p>Select a crop to view its growth-stage breakdown.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="dashboard-section" aria-labelledby="history-title">
+      <div class="section-heading">
+        <div><span class="section-number">05</span><div><p class="section-kicker">History</p><h2 id="history-title">Recent readings</h2></div></div>
+      </div>
+      <div class="history-table" data-history>
+        <p>No historical readings available.</p>
+      </div>
+    </section>
+
+    <footer><div><strong>Soil Monitoring System</strong><span>ESP32 + 7-in-1 soil sensor monitoring dashboard</span></div><p>Demonstration values only · Confirm readings against local field conditions.</p></footer>
+  </main>
+</body>
+</html>
